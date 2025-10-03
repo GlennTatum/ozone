@@ -1,0 +1,11 @@
+FROM node:trixie-slim
+
+WORKDIR /app
+
+COPY . /app
+
+# bootstrap node_modules if npm is not installed locally
+# docker build -f Dockerfile.bootstrap -t node:bootstrap .
+# docker run -it -d -v .:/app node:bootstrap
+# docker exec -it container /bin/bash
+# npm install
