@@ -1,8 +1,11 @@
 package api
 
 import (
+	"errors"
 	"log"
 	"net/http"
+	"os"
+	"ozone/util"
 	"time"
 
 	"github.com/alexedwards/scs/redisstore"
@@ -10,7 +13,6 @@ import (
 	gocql "github.com/gocql/gocql"
 	"github.com/gomodule/redigo/redis"
 	"github.com/gorilla/mux"
-	gocqlx "github.com/scylladb/gocqlx/v2"
 	"go.uber.org/zap"
 )
 
@@ -19,21 +21,22 @@ const CASSANDRA_URL = "127.0.0.1:9042"
 
 type App struct {
 	r       *mux.Router
-	session *scs.SessionManager
-	db      *gocqlx.Session
+	Session *scs.SessionManager
+	K       *util.ResourceManagerClient
+	Db      *gocql.Session
 	logger  *zap.SugaredLogger
 	cache   *redis.Pool
 }
 
-func cassandraSession(cluster *gocql.ClusterConfig) *gocqlx.Session {
-	conn, err := gocqlx.WrapSession(cluster.CreateSession())
+func cassandraSession(cluster *gocql.ClusterConfig) *gocql.Session {
+	conn, err := cluster.CreateSession()
 	if err != nil {
 		log.Fatal(err)
 	}
-	return &conn
+	return conn
 }
 
-func NewApp() *App {
+func NewApp() (*App, error) {
 
 	pool := &redis.Pool{
 		MaxIdle: 10,
@@ -55,22 +58,45 @@ func NewApp() *App {
 	defer logger.Sync()
 	sugar := logger.Sugar()
 
+	var mgmt *util.ResourceManagerClient
+	_, ok := os.LookupEnv("PRODUCTION")
+	if ok {
+		m, err := util.NewInClusterResourceManagerClient()
+		mgmt = m
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		kconfig, ok := os.LookupEnv("KUBECONFIG")
+		if !ok {
+			return nil, errors.New("No Kubeconfig found")
+		}
+		m, err := util.NewOutOfClusterResourceManagerClient(kconfig)
+		mgmt = m
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	return &App{
 		r:       r,
-		session: sessionManager,
-		db:      db,
+		K:       mgmt,
+		Session: sessionManager,
+		Db:      db,
 		logger:  sugar,
 		cache:   pool,
-	}
+	}, nil
 }
 
 func Exec() {
-	app := NewApp()
+	app, err := NewApp()
 
-	app.r.Use(app.session.LoadAndSave)
-	app.r.Use(app.Authz)
+	app.r.Use(app.Session.LoadAndSave)
+	app.r.HandleFunc("/", app.HomeRoute)
 
-	app.r.HandleFunc("/healthz", app.healthz)
+	e := app.r.PathPrefix("/events").Subrouter()
+	e.Use(app.Authz)
+	e.HandleFunc("/e/{id}", app.EventRoute) // .Methods("POST") setup cookieJar in postman
 
 	app.logger.Debugw("starting server...")
 	srv := &http.Server{
@@ -79,6 +105,8 @@ func Exec() {
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
 	}
-
+	if err != nil {
+		panic(err)
+	}
 	log.Fatal(srv.ListenAndServe())
 }
