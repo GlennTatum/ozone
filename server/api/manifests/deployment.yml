@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: code-server-{{ .Name }}
+  namespace: code-server
+  labels:
+    app: code-server-{{ .Name }}
+  annotations:
+    createdBy: ozone
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: code-server-{{ .Name }}
+  template:
+    metadata:
+      labels:
+        app: code-server-{{ .Name }}
+    spec:
+      containers:
+        - name: code-server
+          image: codercom/code-server:latest
+          imagePullPolicy: Always
+          args:
+            - "--bind-addr"
+            - "0.0.0.0:8080"
+            - "--auth"
+            - "password"
+            - "--disable-telemetry"
+          env:
+            - name: PASSWORD
+              value: "rit123"
+          ports:
+            - name: http
+              containerPort: {{ .Port }}

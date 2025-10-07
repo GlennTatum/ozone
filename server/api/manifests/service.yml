@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: code-server-{{ .Name }}
+  namespace: code-server
+spec:
+  selector:
+    app: code-server-{{ .Name }}
+  type: NodePort
+  ports:
+    - name: http
+      port: 8080          # ClusterIP port (service-level)
+      targetPort: 8080    # Container port inside the Pod
+      nodePort: {{ .Port }}     # Fixed NodePort you’ll connect to
