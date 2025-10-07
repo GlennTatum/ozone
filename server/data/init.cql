@@ -6,6 +6,7 @@ CREATE KEYSPACE IF NOT EXISTS main
 CREATE TABLE IF NOT EXISTS main.account (
     session    text,
     resource   uuid,
+    port       bigint,
     PRIMARY KEY (session)
 );
 
