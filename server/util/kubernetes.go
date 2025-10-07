@@ -15,8 +15,8 @@ import (
 )
 
 type ResourceManagerClient struct {
-	clientset *kubernetes.Clientset
-	dynamic   *dynamic.DynamicClient
+	Clientset *kubernetes.Clientset
+	Dynamic   *dynamic.DynamicClient
 }
 
 func (c *ResourceManagerClient) Unmarshal(in []byte) (*unstructured.Unstructured, error) {
@@ -43,8 +43,8 @@ func NewInClusterResourceManagerClient() (*ResourceManagerClient, error) {
 		return nil, err
 	}
 	c := &ResourceManagerClient{
-		clientset: clientset,
-		dynamic:   dynamicClient,
+		Clientset: clientset,
+		Dynamic:   dynamicClient,
 	}
 	return c, nil
 }
@@ -63,15 +63,15 @@ func NewOutOfClusterResourceManagerClient(kubeconfig string) (*ResourceManagerCl
 		return nil, err
 	}
 	c := &ResourceManagerClient{
-		clientset: clientset,
-		dynamic:   dynamicClient,
+		Clientset: clientset,
+		Dynamic:   dynamicClient,
 	}
 	return c, nil
 }
 
 func (c *ResourceManagerClient) GroupVersionResource(data *unstructured.Unstructured) (schema.GroupVersionResource, error) {
 
-	groupresources, err := restmapper.GetAPIGroupResources(c.clientset.DiscoveryClient)
+	groupresources, err := restmapper.GetAPIGroupResources(c.Clientset.DiscoveryClient)
 	if err != nil {
 		return schema.GroupVersionResource{}, err
 	}
@@ -91,10 +91,27 @@ func (c *ResourceManagerClient) CreateResource(namespace string, data *unstructu
 	if err != nil {
 		return err
 	}
-	res := c.dynamic.Resource(gvr)
+	res := c.Dynamic.Resource(gvr)
 	_, err = res.Namespace(namespace).Create(
 		context.Background(),
 		data,
+		opts,
+	)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (c *ResourceManagerClient) GetResource(namespace string, name string, data *unstructured.Unstructured, opts v1.GetOptions) error {
+	gvr, err := c.GroupVersionResource(data)
+	if err != nil {
+		return err
+	}
+	res := c.Dynamic.Resource(gvr)
+	_, err = res.Namespace(namespace).Get(
+		context.Background(),
+		name,
 		opts,
 	)
 	if err != nil {
@@ -108,7 +125,7 @@ func (c *ResourceManagerClient) DeleteResource(namespace string, data *unstructu
 	if err != nil {
 		return err
 	}
-	res := c.dynamic.Resource(gvr)
+	res := c.Dynamic.Resource(gvr)
 	err = res.Namespace(namespace).Delete(
 		context.Background(),
 		data.GetName(),
