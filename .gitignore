@@ -2,3 +2,4 @@ db/
 kubeconfig.yml
 .vscode
 .angular
+server/.env.sh
