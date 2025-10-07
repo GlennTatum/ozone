@@ -1,1 +1,4 @@
 db/
+kubeconfig.yml
+.vscode
+.angular
