@@ -2,6 +2,10 @@
 
 ozone is the cloud native platform for hosting workshops at google developer groups.
 
+### Demo
+
+https://github.com/user-attachments/assets/e32529ae-b213-4e20-944a-4c1caeed2ae6
+
 ### Features
 - Continous Integration with ArgoCD
 - Fully self hosted Kubernetes on Microsoft Azure
