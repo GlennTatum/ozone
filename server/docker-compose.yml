@@ -7,13 +7,17 @@ services:
       - 9042:9042
     environment:
       - CASSANDRA_START_RPC=true
-      - CASSANDRA_LISTEN_ADDRESS=127.0.0.1 # set to auto if using internal docker network
+      - CASSANDRA_LISTEN_ADDRESS=auto # set to auto if using internal docker network
       - CASSANDRA_CLUSTER_NAME=cluster
       - CASSANDRA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch
       - CASSANDRA_DC=dc-1
       - MAX_HEAP_SIZE=4096M
     volumes:
       - ./db:/var/lib/cassandra:rw
+      # cql migration files 
+      # open the cql shell in the container
+      # cqlsh --file /var/data/init.cql
+      - ./data:/var/data:rw
   redis:
     image: redis:bookworm
     ports:
