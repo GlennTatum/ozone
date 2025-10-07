@@ -1,41 +1,41 @@
-<!-- Full-screen flex container -->
-<section class="hero is-fullheight has-background-dark">
+<!-- Full-screen hero section -->
+<section class="hero is-fullheight has-background-gradient">
   <div class="hero-body">
     <div class="container has-text-centered">
-      <div class="gateway box mx-auto">
-        <h2 class="title is-4 mb-5 has-text-weight-semibold has-text-link-light">
+      <div class="gateway box mx-auto has-glass-effect p-6">
+        <h2 class="title is-3 mb-5 has-text-weight-semibold has-text-white">
           Google Developer Groups @ RIT
         </h2>
 
         <form [formGroup]="form" (ngSubmit)="onClickStart()" class="gateway-form">
           <div class="field">
-            <label class="label has-text-light" for="resourceId">Resource ID</label>
+            <label class="label has-text-light" for="resourceId"></label>
             <div class="control has-text-centered">
               <input
                 id="resourceId"
                 type="text"
                 maxlength="6"
                 formControlName="resourceId"
-                class="input code-input is-medium has-text-centered"
-                placeholder="______"
+                class="input code-input is-medium has-text-centered is-rounded modern-input"
+                placeholder="Enter Workshop Code"
               />
             </div>
           </div>
 
-          <div class="control mt-4">
-            <button type="submit" class="button is-link is-fullwidth is-rounded">
-              Start
+          <div class="control mt-5">
+            <button type="submit" class="button is-link is-fullwidth is-rounded modern-button">
+              Start Instance
             </button>
           </div>
         </form>
 
-        <hr />
+        <hr class="divider" />
 
-        <div *ngIf="eventResponse; else loading">
-          <p class="is-size-5 has-text-weight-medium">
+        <div *ngIf="eventResponse; else loading" class="fade-in">
+          <p class="is-size-5 has-text-weight-medium has-text-white">
             Port Assignment:
             <a
-              class="port-link"
+              class="port-link has-text-link-light"
               [href]="baseUrl + eventResponse.PortAssignment"
               target="_blank"
               rel="noopener noreferrer"
@@ -46,7 +46,7 @@
         </div>
 
         <ng-template #loading>
-          <p class="has-text-grey-light">No data fetched yet.</p>
+          <p class="has-text-grey-light mt-3">Enter a code to start an instance</p>
         </ng-template>
       </div>
     </div>
