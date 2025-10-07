@@ -60,8 +60,8 @@ func NewApp() (*App, error) {
 	sugar := logger.Sugar()
 
 	var mgmt *util.ResourceManagerClient
-	_, ok := os.LookupEnv("PRODUCTION")
-	if ok {
+	v, ok := os.LookupEnv("APP_ENV")
+	if ok && (v == "PRODUCTION") {
 		m, err := util.NewInClusterResourceManagerClient()
 		mgmt = m
 		if err != nil {
