@@ -17,9 +17,6 @@ import (
 	"go.uber.org/zap"
 )
 
-const REDIS_URL = "127.0.0.1:6379"
-const CASSANDRA_URL = "127.0.0.1:9042"
-
 type App struct {
 	r       *mux.Router
 	Session *scs.SessionManager
@@ -38,6 +35,9 @@ func cassandraSession(cluster *gocql.ClusterConfig) *gocql.Session {
 }
 
 func NewApp() (*App, error) {
+
+	REDIS_URL, _ := os.LookupEnv("REDIS_URL")
+	CASSANDRA_URL, _ := os.LookupEnv("CASSANDRA_URL")
 
 	pool := &redis.Pool{
 		MaxIdle: 10,

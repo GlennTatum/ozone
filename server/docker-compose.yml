@@ -18,7 +18,32 @@ services:
       # open the cql shell in the container
       # cqlsh --file /var/data/init.cql
       - ./data:/var/data:rw
+    healthcheck:
+      test: ["CMD-SHELL", "cqlsh -e 'DESCRIBE KEYSPACES' 127.0.0.1 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
   redis:
     image: redis:bookworm
     ports:
       - '6379:6379'
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+  ozone:
+    image: ozone:latest
+    ports:
+      - '8000:8000'
+    environment:
+      - CASSANDRA_URL=cassandra-1:9042
+      - REDIS_URL=redis:6379
+      - KUBECONFIG=/app/data/kubeconfig.yml
+    volumes:
+      - ./dev:/app/data/:ro
+    depends_on:
+      cassandra-1:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
