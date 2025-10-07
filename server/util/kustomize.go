@@ -56,7 +56,7 @@ func (c *ResourceManagerClient) Kustomize(resource []byte) error {
 		if gvr.Empty() {
 			continue
 		}
-		_, err := c.dynamic.Resource(gvr).
+		_, err := c.Dynamic.Resource(gvr).
 			Namespace(uresource.GetNamespace()).
 			Apply(context.Background(), uresource.GetName(), &kustom, v1.ApplyOptions{Force: true, FieldManager: "botto"}) // field manager is a required api field to determine the client who edited the manifest
 		if err != nil {
