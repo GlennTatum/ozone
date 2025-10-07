@@ -1,0 +1,43 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: ozone-applications
+  namespace: default
+spec:
+  generators:
+    - list:
+        elements:
+          - name: dev
+            namespace: default
+            path: server/helm
+            valuesFile: envs/dev/values.yaml
+            revision: main
+            autoSync: true
+          - name: prod
+            namespace: default
+            path: server/helm
+            valuesFile: envs/prod/values.yaml
+            revision: "refs/tags/v*"   # only syncs on tags
+            autoSync: false
+
+  template:
+    metadata:
+      name: ozone-{{name}}
+    spec:
+      project: default
+      source:
+        repoURL: https://github.com/GlennTatum/ozone.git
+        targetRevision: "{{revision}}"
+        path: "{{path}}"
+        helm:
+          valueFiles:
+            - "{{valuesFile}}"
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: "{{namespace}}"
+      syncPolicy:
+        automated:
+          selfHeal: true
+          prune: true
+        syncOptions:
+          - CreateNamespace=true

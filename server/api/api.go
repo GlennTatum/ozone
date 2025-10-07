@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"ozone/util"
+	"strings"
 	"time"
 
 	"github.com/alexedwards/scs/redisstore"
@@ -27,6 +28,16 @@ type App struct {
 }
 
 func cassandraSession(cluster *gocql.ClusterConfig) *gocql.Session {
+
+	v, _ := os.LookupEnv("APP_ENV")
+	if v == "PRODUCTION" {
+		cluster_username, _ := os.LookupEnv("CASSANDRA_USERNAME")
+		cluster_password, _ := os.LookupEnv("CASSANDA_PASSWORD")
+		cluster.Authenticator = gocql.PasswordAuthenticator{
+			Username: cluster_username, // Replace with your Cassandra username
+			Password: cluster_password, // Replace with your Cassandra password
+		}
+	}
 	conn, err := cluster.CreateSession()
 	if err != nil {
 		log.Fatal(err)
@@ -36,8 +47,15 @@ func cassandraSession(cluster *gocql.ClusterConfig) *gocql.Session {
 
 func NewApp() (*App, error) {
 
-	REDIS_URL, _ := os.LookupEnv("REDIS_URL")
-	CASSANDRA_URL, _ := os.LookupEnv("CASSANDRA_URL")
+	REDIS_URL, ok := os.LookupEnv("REDIS_URL")
+	if !ok {
+		return nil, errors.New("REDIS_URL not found")
+	}
+	CASSANDRA_URL, ok := os.LookupEnv("CASSANDRA_URL")
+	if !ok {
+		return nil, errors.New("CASSANDRA_URL not found")
+	}
+	hosts := strings.Split(CASSANDRA_URL, ",")
 
 	pool := &redis.Pool{
 		MaxIdle: 10,
@@ -46,7 +64,7 @@ func NewApp() (*App, error) {
 		},
 	}
 
-	cluster := gocql.NewCluster(CASSANDRA_URL)
+	cluster := gocql.NewCluster(hosts...)
 	cluster.Keyspace = "main"
 	db := cassandraSession(cluster)
 
@@ -97,7 +115,7 @@ func Exec() {
 
 	// Setup CORS handler
 	c := cors.New(cors.Options{
-		AllowedOrigins:   []string{"http://localhost:4200"},
+		AllowedOrigins:   []string{"http://localhost:4200", "http://code.gdg-rit.dev"},
 		AllowCredentials: true,
 		AllowedMethods:   []string{"GET", "POST", "OPTIONS"},
 		AllowedHeaders:   []string{"Content-Type", "Authorization"},
@@ -120,6 +138,5 @@ func Exec() {
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
 	}
-
 	log.Fatal(srv.ListenAndServe())
 }

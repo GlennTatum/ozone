@@ -1,0 +1,43 @@
+replicaCount: 1
+
+name: ozone-infra-site
+
+image:
+  repository: docker.io/glenntatum/ozone-api
+  tag: latest
+  pullPolicy: Always
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 8000
+
+ingress:
+  enabled: true
+  className: nginx
+  hosts:
+    - host: code.infra.site
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
+resources:
+  limits:
+    cpu: 1000m
+    memory: 1Gi
+  requests:
+    cpu: 500m
+    memory: 512Mi
+
+cassandra:
+  username:
+  password:
+
+env:
+  - name: APP_ENV
+    value: "PRODUCTION"
+  - name: REDIS_URL
+    value: "redis-15529.c258.us-east-1-4.ec2.redns.redis-cloud.com:15529"
+  - name: CASSANDRA_URL
+    value: "34.66.125.202,104.197.74.193,34.134.76.1"
