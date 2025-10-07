@@ -9,10 +9,11 @@ import (
 )
 
 type ResourceMeta struct {
-	Metadata string
+	Name string
+	Port int
 }
 
-func FetchTemplate(name string, opts string) (*bytes.Buffer, error) {
+func FetchTemplate(name string, opts string, port int) (*bytes.Buffer, error) {
 
 	resource_uri := "http://localhost:8001" // TODO switch to env profile
 	r, err := http.Get(fmt.Sprintf("%s/%s", resource_uri, name))
@@ -27,7 +28,7 @@ func FetchTemplate(name string, opts string) (*bytes.Buffer, error) {
 	if err != nil {
 		return nil, err
 	}
-	meta := ResourceMeta{Metadata: opts}
+	meta := ResourceMeta{Name: opts, Port: port}
 	b := new(bytes.Buffer)
 	tmpl.Execute(b, meta)
 	return b, err

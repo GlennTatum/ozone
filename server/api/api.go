@@ -13,6 +13,7 @@ import (
 	gocql "github.com/gocql/gocql"
 	"github.com/gomodule/redigo/redis"
 	"github.com/gorilla/mux"
+	"github.com/rs/cors"
 	"go.uber.org/zap"
 )
 
@@ -90,23 +91,35 @@ func NewApp() (*App, error) {
 
 func Exec() {
 	app, err := NewApp()
+	if err != nil {
+		panic(err)
+	}
+
+	// Setup CORS handler
+	c := cors.New(cors.Options{
+		AllowedOrigins:   []string{"http://localhost:4200"},
+		AllowCredentials: true,
+		AllowedMethods:   []string{"GET", "POST", "OPTIONS"},
+		AllowedHeaders:   []string{"Content-Type", "Authorization"},
+		Debug:            true,
+	})
 
 	app.r.Use(app.Session.LoadAndSave)
 	app.r.HandleFunc("/", app.HomeRoute)
 
 	e := app.r.PathPrefix("/events").Subrouter()
 	e.Use(app.Authz)
-	e.HandleFunc("/e/{id}", app.EventRoute) // .Methods("POST") setup cookieJar in postman
+	e.HandleFunc("/e/{id}", app.EventRoute).Methods("POST")
 
 	app.logger.Debugw("starting server...")
+
+	// Wrap router with CORS
 	srv := &http.Server{
-		Handler:      app.r,
+		Handler:      c.Handler(app.r),
 		Addr:         "0.0.0.0:8000",
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
 	}
-	if err != nil {
-		panic(err)
-	}
+
 	log.Fatal(srv.ListenAndServe())
 }

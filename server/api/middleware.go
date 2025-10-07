@@ -48,11 +48,11 @@ func (app *App) ValidateAuth(r *http.Request) (ValidationResponse, error) {
 		fmt.Println(4)
 		if event_ok {
 			id := rand.Text()
+			app.Session.Put(r.Context(), "session", id)
 			err := app.Db.Query(`INSERT INTO main.account (session) VALUES (?)`, id).Exec()
 			if err != nil {
 				return ValidationResponse{}, err
 			}
-			app.Session.Put(r.Context(), "session", id)
 			return ValidationResponse{isServe: true, isUnauthorized: false}, nil
 		}
 		fmt.Println(5)

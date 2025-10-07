@@ -15,7 +15,7 @@ func TestFetchTemplate(t *testing.T) {
 		t.Fatalf("%s", err.Error())
 	}
 
-	tmpl, err := util.FetchTemplate("deployment.yml", "example-uuid")
+	tmpl, err := util.FetchTemplate("deployment.yml", "example-uuid", 31000)
 	if err != nil {
 		t.Fatalf("%s", err.Error())
 	}
@@ -27,7 +27,7 @@ func TestFetchTemplate(t *testing.T) {
 
 	}
 	// create the resource
-	err = app.K.CreateResource("lab", data, v1.CreateOptions{})
+	err = app.K.CreateResource("code-server", data, v1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("%s", err.Error())
 	}

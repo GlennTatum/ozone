@@ -6,8 +6,9 @@ import (
 	"net/http"
 	"ozone/models"
 
+	"math/rand/v2" // Use math/rand/v2 for newer Go versions
+
 	"github.com/gocql/gocql"
-	"github.com/gorilla/mux"
 )
 
 func StatusReply(w http.ResponseWriter, code int) {
@@ -28,11 +29,14 @@ func (app *App) HomeRoute(w http.ResponseWriter, r *http.Request) {
 	app.Home(w, r)
 }
 
+type EventResponse struct {
+	PortAssignment int
+}
+
 /*
 Create a Deployment Resource based on an Event that is being currently being accessed
 */
 func (app *App) Event(w http.ResponseWriter, r *http.Request) error {
-	vars := mux.Vars(r)
 
 	// the resource identifier for the kubernetes deployment
 	resource_uuid, err := gocql.RandomUUID()
@@ -42,16 +46,25 @@ func (app *App) Event(w http.ResponseWriter, r *http.Request) error {
 
 	user := app.Session.GetString(r.Context(), "session")
 
-	// the event code (will have an associated tag on docker hub ex: codeserver:ABCDEFG)
-	resp, err := json.Marshal(vars["id"])
+	min := 31000
+	max := 32000
+
+	port := rand.IntN(max-min) + min
+
+	// create a new user
+	models.CreateAccount(app.Db, user, resource_uuid, port)
+
+	err = app.CreateResourceFromTeplate("deployment.yml", "code-server", resource_uuid.String(), port)
 	if err != nil {
 		return err
 	}
 
-	// create a new user
-	models.CreateAccount(app.Db, user, resource_uuid)
+	err = app.CreateResourceFromTeplate("service.yml", "code-server", resource_uuid.String(), port)
+	if err != nil {
+		return err
+	}
 
-	err = app.CreateResourceFromTeplate("deployment.yml", "lab", resource_uuid.String())
+	resp, err := json.Marshal(EventResponse{PortAssignment: port})
 	if err != nil {
 		return err
 	}

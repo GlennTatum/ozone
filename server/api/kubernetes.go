@@ -28,10 +28,10 @@ func (app *App) OzoneIngressUserResourcePatch(namespace string) error {
 	return nil
 }
 
-func (app *App) CreateResourceFromTeplate(path string, namespace string, resource_id string) error {
+func (app *App) CreateResourceFromTeplate(path string, namespace string, resource_id string, port int) error {
 	// get the yaml manifest as a template
 	// the Account table will now have a resource associated with it in the kubernetes cluster
-	tmpl, err := util.FetchTemplate(path, resource_id)
+	tmpl, err := util.FetchTemplate(path, resource_id, port)
 	if err != nil {
 		return err
 	}
