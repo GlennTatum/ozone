@@ -1,32 +1,47 @@
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
-import { Observable, timer } from 'rxjs';
+import { CommonModule } from '@angular/common';
+import { ReactiveFormsModule, FormBuilder, FormGroup } from '@angular/forms';
+import { EventResponse, KubernetesService } from '../kubernetes';
+import { environment } from '../../environments/environment.development';
 
 @Component({
   selector: 'app-gateway',
-  imports: [],
+  standalone: true,
+  imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './gateway.html',
-  styleUrl: './gateway.css'
+  styleUrls: ['./gateway.css']
 })
 export class Gateway implements OnInit {
+  baseUrl = environment.baseUrl
+  eventResponse?: EventResponse;
+  form!: FormGroup;
 
-  id: string
-  discovery: boolean
+  constructor(
+    private kubernetesService: KubernetesService,
+    private fb: FormBuilder
+  ) {}
 
-  constructor(private activatedRoute: ActivatedRoute) {
-    this.id = ""
-    this.discovery = false
+  ngOnInit(): void {
+    this.form = this.fb.group({
+      resourceId: ['']
+    });
   }
 
-  public ngOnInit(): void {
-      this.activatedRoute.url.subscribe((segment) => {
-        const p = segment.at(1)
-        this.id = p ? p.toString() : ""
-      })
-  }
+  onClickStart(): void {
+    const value = this.form.value.resourceId?.trim();
+    if (!value) {
+      console.warn('Resource ID is empty.');
+      return;
+    }
 
-  public Discover() {
-    // setup rxjs timer to poll api server for pod availability
-    this.discovery = true
+    this.kubernetesService.fetchState(value).subscribe({
+      next: (response: EventResponse) => {
+        this.eventResponse = response;
+        console.log('Fetched event state:', response);
+      },
+      error: (err) => {
+        console.error('Error fetching Kubernetes state:', err);
+      }
+    });
   }
 }

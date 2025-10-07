@@ -3,6 +3,6 @@ import { Gateway } from './gateway/gateway';
 
 export const routes: Routes = [
     {
-        path: 'start/:id', component: Gateway
+        path: 'start', component: Gateway
     },
 ];
